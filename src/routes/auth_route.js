@@ -22,7 +22,10 @@ auth_router.post(
         .status(500)
         .send(DefaultResponse.generateErrorResponse(500, validation.array()));
     }
-    let { username, password } = req.body;
+    const { username, password } = req.body;
+
+    console.log(username);
+
     //Check existing user
     const existingUser = await user.findOne({ where: { username } });
 
