@@ -3,11 +3,26 @@ const { body, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const DefaultResponse = require("../default/response");
-const user = require("../database/models/user_model");
+const User = require("../database/models/user_model");
+const { verifyToken } = require("../middleware/authentication_middleware");
+const Role = require("../database/models/role_model");
 
 require("dotenv").config();
 
 const auth_router = Router();
+
+auth_router.post("/", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.JWT_SECRET_KEY, async (err, data) => {
+    if (err) {
+      res.send(403);
+    } else {
+      const user = await User.findByPk(data.id, {
+        include: [Role],
+      });
+      res.send(DefaultResponse.generateSuccessResponse(200, "", user));
+    }
+  });
+});
 
 auth_router.post(
   "/login",
@@ -24,45 +39,70 @@ auth_router.post(
     }
     const { username, password } = req.body;
 
-    console.log(username);
-
     //Check existing user
-    const existingUser = await user.findOne({ where: { username } });
+    const existingUser = await User.findOne({ where: { username } });
 
-    //Check if password matched
-    const match = bcrypt.compareSync(password, existingUser.password);
-    console.log(match);
-    if (existingUser === null || match === false) {
+    if (existingUser) {
+      const match = bcrypt.compareSync(password, existingUser.password);
+
+      if (match == false) {
+        res.status(404).send(
+          DefaultResponse.generateErrorResponse(404, {
+            user: "Username atau password salah",
+          })
+        );
+        return;
+      }
+    } else {
       res.status(404).send(
         DefaultResponse.generateErrorResponse(404, {
-          user: "Tidak ditemukan",
+          user: "Username atau password salah",
         })
       );
-    } else {
-      const token = jwt.sign(
-        {
-          id: existingUser.id,
-          username: existingUser.username,
-        },
-        process.env.JWT_SECRET_KEY,
-        { expiresIn: "7d" }
-      );
-
-      res.send(
-        DefaultResponse.generateSuccessResponse(200, "Berhasil login", {
-          token: `Bearer ${token}`,
-        })
-      );
+      return;
     }
+
+    const token = jwt.sign(
+      {
+        id: existingUser.id,
+        username: existingUser.username,
+        roleId: existingUser.roleId,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+    res.send(
+      DefaultResponse.generateSuccessResponse(200, "Login berhasil", {
+        token: `Bearer ${token}`,
+      })
+    );
   }
 );
 
 auth_router.post(
   "/register",
   [
-    body("name").notEmpty(),
-    body("username").notEmpty().isLength({ min: 5 }),
-    body("password").notEmpty().isLength({ min: 5 }),
+    body("name").notEmpty().withMessage("Name tidak boleh kosong"),
+    body("username")
+      .notEmpty()
+      .withMessage("Username tidak boleh kosong")
+      .isLength({ min: 5 })
+      .withMessage("Username minimal 5 huruf")
+      .custom(async (value) => {
+        const user = await User.findOne({
+          where: {
+            username: value,
+          },
+        });
+        if (user) {
+          throw new Error("Username sudah digunakan");
+        }
+      }),
+    body("password")
+      .notEmpty()
+      .withMessage("Password tidak boleh kosong")
+      .isLength({ min: 5 })
+      .withMessage("Password minimal 5 huruf"),
   ],
   async (req, res) => {
     const validation = validationResult(req);
@@ -70,15 +110,24 @@ auth_router.post(
       res
         .status(500)
         .send(DefaultResponse.generateErrorResponse(500, validation.array()));
+      return;
     }
+
     const { name, username, password } = req.body;
-    console.log(password);
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const newUser = await user.create({
+    const newUser = await User.create({
       name,
       username,
       password: hashedPassword,
     });
+    const role = await Role.findOne({
+      where: {
+        name: "User",
+      },
+    });
+    if (role) {
+      await newUser.update({ roleId: role.id });
+    }
 
     res
       .status(201)
@@ -86,7 +135,7 @@ auth_router.post(
         DefaultResponse.generateSuccessResponse(
           201,
           "Pendaftaran berhasil",
-          user
+          User
         )
       );
   }

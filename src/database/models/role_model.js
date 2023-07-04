@@ -1,23 +1,24 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config");
 
-const user = sequelize.define(
-  "user",
+const Role = sequelize.define(
+  "role",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: DataTypes.STRING,
-    username: DataTypes.STRING,
-    password: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   },
   { timestamps: false }
 );
 
 async () => {
-  await user.sync();
+  await Role.sync();
 };
 
-module.exports = user;
+module.exports = Role;

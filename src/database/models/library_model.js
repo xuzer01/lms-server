@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config");
 
-const user = sequelize.define(
-  "user",
+const Library = sequelize.define(
+  "library",
   {
     id: {
       type: DataTypes.UUID,
@@ -10,14 +10,17 @@ const user = sequelize.define(
       primaryKey: true,
     },
     name: DataTypes.STRING,
-    username: DataTypes.STRING,
-    password: DataTypes.STRING,
+    location: DataTypes.TEXT,
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   { timestamps: false }
 );
 
 async () => {
-  await user.sync();
+  await Library.sync();
 };
 
-module.exports = user;
+module.exports = Library;
