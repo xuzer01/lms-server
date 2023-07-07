@@ -9,7 +9,10 @@ const Library_Books = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    isAvailable: DataTypes.BOOLEAN,
+    isAvailable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   { timestamps: false }
 );

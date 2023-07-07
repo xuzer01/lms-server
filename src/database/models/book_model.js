@@ -12,7 +12,7 @@ const Book = sequelize.define(
     title: DataTypes.STRING,
     author: DataTypes.STRING,
     publisher: DataTypes.STRING,
-    date: DataTypes.DATEONLY,
+    release_date: DataTypes.DATEONLY,
     image_url: DataTypes.STRING,
   },
   { timestamps: false }

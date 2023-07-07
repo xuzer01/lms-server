@@ -6,6 +6,7 @@ const DefaultResponse = require("../default/response");
 const User = require("../database/models/user_model");
 const { verifyToken } = require("../middleware/authentication_middleware");
 const Role = require("../database/models/role_model");
+const Library = require("../database/models/library_model");
 
 require("dotenv").config();
 
@@ -17,7 +18,7 @@ auth_router.post("/", verifyToken, (req, res) => {
       res.send(403);
     } else {
       const user = await User.findByPk(data.id, {
-        include: [Role],
+        include: [Role, Library],
       });
       res.send(DefaultResponse.generateSuccessResponse(200, "", user));
     }

@@ -1,11 +1,16 @@
 const { Router } = require("express");
 const Library = require("../database/models/library_model");
+const User = require("../database/models/user_model");
+const Book = require("../database/models/book_model");
 const {
   generateSuccessResponse,
   generateErrorResponse,
 } = require("../default/response");
 const { body, validationResult, param } = require("express-validator");
-const { verifyAdmin } = require("../middleware/authentication_middleware");
+const {
+  verifyAdmin,
+  verifyStaff,
+} = require("../middleware/authentication_middleware");
 
 const library_router = Router();
 
@@ -13,6 +18,26 @@ library_router.get("/", async (req, res) => {
   const data = await Library.findAll();
   res.send(generateSuccessResponse(200, "", data));
 });
+
+library_router.get("/:id", async (req, res) => {
+  const data = await Library.findByPk(req.params.id);
+  res.send(generateSuccessResponse(200, "", data));
+});
+
+library_router.get(
+  "/:id/books",
+  [verifyStaff, param("id").notEmpty().withMessage("ID tidak boleh kosong")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.send(generateErrorResponse(500, errors.array()));
+    }
+
+    const user = await User.findByPk(req.user.id);
+    const library = await Library.findByPk(user.libraryId, { include: Book });
+    return res.send(generateSuccessResponse(202, "", library.books));
+  }
+);
 
 library_router.post(
   "/add",
