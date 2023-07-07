@@ -18,6 +18,8 @@ Library.hasMany(user);
 
 Library.belongsToMany(Book, { through: Library_Books });
 Book.belongsToMany(Library, { through: Library_Books });
+Library_Books.belongsTo(Book);
+Library_Books.belongsTo(Library);
 
 async function sync() {
   try {

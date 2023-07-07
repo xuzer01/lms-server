@@ -8,16 +8,44 @@ const { validationResult, body, param } = require("express-validator");
 const { verifyAdmin } = require("../middleware/authentication_middleware");
 const user = require("../database/models/user_model");
 const Library = require("../database/models/library_model");
+const { Op } = require("sequelize");
 
 const router = Router();
 
 router.get("/", async (req, res) => {
-  const roles = await Role.findAll();
+  const name = req.query.name || "";
+  const includeUser = req.query.user || false;
+  const notStaff = req.query.nostaff || false;
+  let roles;
+  if (includeUser) {
+    roles = await Role.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`,
+        },
+      },
+      include: [
+        {
+          model: user,
+          include: [Library],
+        },
+      ],
+    });
+  } else {
+    roles = await Role.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`,
+        },
+      },
+    });
+  }
+
   res.send(generateSuccessResponse(200, "", roles));
 });
 
 router.get("/:id", async (req, res) => {
-  const role = await Role.findByPk(req.params.id);
+  const role = await Role.findByPk(req.params.id, { include: [user] });
   res.send(generateSuccessResponse(200, "", role));
 });
 
