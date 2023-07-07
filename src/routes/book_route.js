@@ -6,7 +6,7 @@ const {
 } = require("../default/response");
 const Library_Books = require("../database/models/library_book_model");
 const Library = require("../database/models/library_model");
-const { body, validationResult } = require("express-validator");
+const { body, validationResult, param } = require("express-validator");
 const {
   verifyAdmin,
   verifyStaff,
@@ -29,7 +29,7 @@ book_router.get("/:id", async (req, res) => {
 book_router.post(
   "/",
   [
-    verifyAdmin,
+    verifyStaff,
     body("title").notEmpty().withMessage("title tidak boleh kosong"),
     body("author").notEmpty().withMessage("author tidak boleh kosong"),
     body("publisher").notEmpty().withMessage("publisher tidak boleh kosong"),
@@ -48,12 +48,26 @@ book_router.put(
   "/:id",
   [
     verifyStaff,
-
+    param("id").notEmpty().withMessage("ID tidak boleh kosong"),
     body("title").notEmpty().withMessage("title tidak boleh kosong"),
     body("author").notEmpty().withMessage("author tidak boleh kosong"),
     body("publisher").notEmpty().withMessage("publisher tidak boleh kosong"),
+    body("date").notEmpty().withMessage("date tidak boleh kosong"),
   ],
-  (req, (res) => {})
+
+  async (req, res) => {
+    const book = await Book.findByPk(req.params.id);
+    const { title, author, publisher } = req.body;
+    if (book == null) {
+      return res.send(generateErrorResponse(404, "Buku tidak ditemukan"));
+    }
+    try {
+      const data = await book.update({ title, author, publisher });
+      return res.send(generateSuccessResponse(200, "Buku telah diubah", data));
+    } catch (error) {
+      return res.send(generateErrorResponse(500, error));
+    }
+  }
 );
 
 module.exports = book_router;
