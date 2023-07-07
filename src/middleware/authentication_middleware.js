@@ -32,6 +32,7 @@ const verifyAdmin = (req, res, next) => {
         return res.status(403).send("Dari validasi");
       }
       if (err === null && role !== null && role.name === "Admin") {
+        req.user = data;
         next();
       }
     });
