@@ -7,7 +7,10 @@ const {
 const Library_Books = require("../database/models/library_book_model");
 const Library = require("../database/models/library_model");
 const { body, validationResult } = require("express-validator");
-const { verifyAdmin } = require("../middleware/authentication_middleware");
+const {
+  verifyAdmin,
+  verifyStaff,
+} = require("../middleware/authentication_middleware");
 
 const book_router = Router();
 
@@ -39,6 +42,18 @@ book_router.post(
     const book = await Book.create(req.body);
     return res.send(generateSuccessResponse(201, "", book));
   }
+);
+
+book_router.put(
+  "/:id",
+  [
+    verifyStaff,
+
+    body("title").notEmpty().withMessage("title tidak boleh kosong"),
+    body("author").notEmpty().withMessage("author tidak boleh kosong"),
+    body("publisher").notEmpty().withMessage("publisher tidak boleh kosong"),
+  ],
+  (req, (res) => {})
 );
 
 module.exports = book_router;
