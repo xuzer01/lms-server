@@ -1,10 +1,10 @@
 const { Sequelize } = require("sequelize");
 
-const database_host = "localhost";
-const database_port = 3306;
-const database_name = "lms";
+const database_host = "containers-us-west-152.railway.app";
+const database_port = 7707;
+const database_name = "railway";
 const database_username = "root";
-const database_password = "";
+const database_password = "8e8pXJTbwYZseKDFSsH0";
 
 const sequelize = new Sequelize(
   database_name,
