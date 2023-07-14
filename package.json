@@ -10,6 +10,6 @@
     "sequelize": "^6.32.1"
   },
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon index.js"
   }
 }
