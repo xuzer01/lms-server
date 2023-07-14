@@ -30,3 +30,5 @@ app.use((req, res, next) => {
 database.sync();
 
 app.listen(3000);
+
+module.exports = app;
