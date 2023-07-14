@@ -12,11 +12,19 @@ const {
   verifyStaff,
 } = require("../middleware/authentication_middleware");
 const User = require("../database/models/user_model");
+const { Op } = require("sequelize");
 
 const book_router = Router();
 
 book_router.get("/", async (req, res) => {
-  const books = await Book.findAll();
+  const query = req.query.q || "";
+  const books = await Book.findAll({
+    where: {
+      title: {
+        [Op.like]: `%${query}%`,
+      },
+    },
+  });
   return res.send(generateSuccessResponse(200, "", books));
 });
 

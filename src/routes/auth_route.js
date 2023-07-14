@@ -104,6 +104,9 @@ auth_router.post(
       .withMessage("Password tidak boleh kosong")
       .isLength({ min: 5 })
       .withMessage("Password minimal 5 huruf"),
+    body("gender").notEmpty().withMessage("Gender tidak boleh kosong"),
+    body("address").notEmpty().withMessage("address tidak boleh kosong"),
+    body("phone").notEmpty().withMessage("Phone tidak boleh kosong"),
   ],
   async (req, res) => {
     const validation = validationResult(req);
@@ -114,12 +117,15 @@ auth_router.post(
       return;
     }
 
-    const { name, username, password } = req.body;
+    const { name, username, password, gender, address, phone } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     const newUser = await User.create({
       name,
       username,
       password: hashedPassword,
+      gender,
+      address,
+      phone,
     });
     const role = await Role.findOne({
       where: {

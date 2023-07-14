@@ -35,7 +35,11 @@ library_router.get(
 
     const user = await User.findByPk(req.user.id);
     const library = await Library.findByPk(user.libraryId, { include: Book });
-    return res.send(generateSuccessResponse(202, "", library.books));
+    if (library === null) {
+      return res.send(generateSuccessResponse(200, "", []));
+    } else {
+      return res.send(generateSuccessResponse(202, "", library.books));
+    }
   }
 );
 

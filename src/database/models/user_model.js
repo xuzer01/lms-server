@@ -12,6 +12,9 @@ const user = sequelize.define(
     name: DataTypes.STRING,
     username: DataTypes.STRING,
     password: DataTypes.STRING,
+    gender: DataTypes.ENUM(["L", "P"]),
+    address: DataTypes.TEXT,
+    phone: DataTypes.STRING,
   },
   { timestamps: false }
 );

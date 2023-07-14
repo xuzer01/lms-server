@@ -6,7 +6,7 @@ const {
 } = require("../default/response");
 const { validationResult, body, param } = require("express-validator");
 const { verifyAdmin } = require("../middleware/authentication_middleware");
-const user = require("../database/models/user_model");
+const User = require("../database/models/user_model");
 const Library = require("../database/models/library_model");
 const { Op } = require("sequelize");
 
@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
       },
       include: [
         {
-          model: user,
+          model: User,
           include: [Library],
         },
       ],
@@ -45,7 +45,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const role = await Role.findByPk(req.params.id, { include: [user] });
+  const role = await Role.findByPk(req.params.id, { include: [User] });
   res.send(generateSuccessResponse(200, "", role));
 });
 
@@ -140,7 +140,7 @@ router.post(
       .notEmpty()
       .withMessage("user_id tidak boleh kosong")
       .custom(async (id) => {
-        const found = await user.findByPk(id);
+        const found = await User.findByPk(id);
         if (found === null) {
           throw new Error("User tidak ditemukan");
         }
@@ -173,7 +173,7 @@ router.post(
         .send(generateErrorResponse(404, { role: "Role tidak ditemukan" }));
     }
     try {
-      const cUser = await user.update(
+      const cUser = await User.update(
         {
           roleId: role.id,
           libraryId: library_id,
@@ -189,6 +189,43 @@ router.post(
       );
     } catch (error) {
       return res.send(generateErrorResponse(500, error));
+    }
+  }
+);
+
+router.post(
+  "/release",
+  [
+    verifyAdmin,
+    body("user_id")
+      .notEmpty()
+      .withMessage("user_id tidak boleh kosong")
+      .custom(async (value) => {
+        const user = await User.findByPk(value);
+        if (user === null) {
+          throw new Error("user_id tidak ditemukan");
+        }
+      }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.send(generateErrorResponse(500, errors));
+    }
+    const { user_id } = req.body;
+    const user = await User.findByPk(user_id);
+    const userRole = await Role.findOne({
+      where: {
+        name: "User",
+      },
+    });
+    try {
+      await user.update({ roleId: userRole.id, libraryId: null });
+      return res
+        .status(202)
+        .send(generateSuccessResponse(202, "Data berhasil diubah"));
+    } catch (error) {
+      return res.status(500).send(generateErrorResponse(500, error));
     }
   }
 );
